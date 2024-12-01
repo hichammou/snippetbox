@@ -8,11 +8,30 @@ import (
 	"net/http/cookiejar"
 	"net/http/httptest"
 	"testing"
+	"time"
+
+	"github.com/alexedwards/scs/v2"
+	"snippetbox.hichammou/internal/models/mocks"
 )
 
 func newTestApplication(t *testing.T) *application {
+	// Create an instance of template cache
+	templateCache, err := newTemplateCache()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// A session manager instance. For test we will not set a Store for the session manager
+	sessionManager := scs.New()
+	sessionManager.Lifetime = 12 * time.Hour
+	sessionManager.Cookie.Secure = true
+
 	return &application{
-		logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
+		logger:         slog.New(slog.NewTextHandler(io.Discard, nil)),
+		sessionManager: sessionManager,
+		templateCache:  templateCache,
+		snippets:       &mocks.SnippetModel{},
+		users:          &mocks.UserModel{},
 	}
 }
 
@@ -28,10 +47,10 @@ func newTestServer(t *testing.T, h http.Handler) *testServer {
 		t.Fatal(err)
 	}
 
-	// add the cookie jar to the test server client. Any response cookie will now be stored and sent with subsequent requests when using this client
+	// Add the cookie jar to the test server client. Any response cookie will now be stored and sent with subsequent requests when using this client
 	ts.Client().Jar = jar
 
-	// disable redirect-following for the test server
+	// Disable redirect-following for the test server
 	ts.Client().CheckRedirect = func(req *http.Request, via []*http.Request) error {
 		return http.ErrUseLastResponse
 	}
