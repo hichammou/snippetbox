@@ -2,11 +2,14 @@ package main
 
 import (
 	"bytes"
+	"html"
 	"io"
 	"log/slog"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
+	"net/url"
+	"regexp"
 	"testing"
 	"time"
 
@@ -39,23 +42,35 @@ type testServer struct {
 	*httptest.Server
 }
 
-func newTestServer(t *testing.T, h http.Handler) *testServer {
-	ts := httptest.NewTLSServer(h)
+var csrfTokenRX = regexp.MustCompile(`<input type='hidden' name='csrf_token' value='(.+)'>`)
 
-	jar, err := cookiejar.New(nil)
+func extractCSRFToken(t *testing.T, body string) string {
+	matches := csrfTokenRX.FindStringSubmatch(body)
+
+	if len(matches) < 2 {
+		t.Fatal("no csrf token found in body")
+	}
+
+	return html.UnescapeString(matches[1])
+}
+
+func (ts *testServer) PostForm(t *testing.T, urlPath string, form url.Values) (int, http.Header, string) {
+	rs, err := ts.Client().PostForm(ts.URL+urlPath, form)
+
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// Add the cookie jar to the test server client. Any response cookie will now be stored and sent with subsequent requests when using this client
-	ts.Client().Jar = jar
+	defer rs.Body.Close()
 
-	// Disable redirect-following for the test server
-	ts.Client().CheckRedirect = func(req *http.Request, via []*http.Request) error {
-		return http.ErrUseLastResponse
+	body, err := io.ReadAll(rs.Body)
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	return &testServer{ts}
+	body = bytes.TrimSpace(body)
+
+	return rs.StatusCode, rs.Header, string(body)
 }
 
 func (ts *testServer) get(t *testing.T, urlPath string) (int, http.Header, string) {
@@ -73,4 +88,23 @@ func (ts *testServer) get(t *testing.T, urlPath string) (int, http.Header, strin
 	body = bytes.TrimSpace(body)
 
 	return rs.StatusCode, rs.Header, string(body)
+}
+
+func newTestServer(t *testing.T, h http.Handler) *testServer {
+	ts := httptest.NewTLSServer(h)
+
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Add the cookie jar to the test server client. Any response cookie will now be stored and sent with subsequent requests when using this client
+	ts.Client().Jar = jar
+
+	// Disable redirect-following for the test server
+	ts.Client().CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
+
+	return &testServer{ts}
 }
