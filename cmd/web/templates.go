@@ -10,11 +10,8 @@ import (
 	"snippetbox.hichammou/ui"
 )
 
-// Define a templateData type to act as the holding structure formain
+// Define a templateData type to act as the holding structure formaing
 // any dynamic data that we want to pass to our HTML templates.
-// At the moment it only contains one field, but we'll add more
-// to it as the build progresses.
-
 type templateData struct {
 	CurrentYear     int
 	Snippet         models.Snippet
