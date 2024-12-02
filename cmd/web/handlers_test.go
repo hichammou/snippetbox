@@ -77,6 +77,39 @@ func TestSnippetView(t *testing.T) {
 	}
 }
 
+func TestSnippetCreate(t *testing.T) {
+	app := newTestApplication(t)
+	ts := newTestServer(t, app.routes())
+	defer ts.Close()
+
+	t.Run("Unauthenticated", func(t *testing.T) {
+		status, header, _ := ts.get(t, "/snippet/create")
+
+		location := header.Get("location")
+
+		assert.Equal(t, status, http.StatusSeeOther)
+		assert.Equal(t, location, "/user/login")
+	})
+
+	t.Run("Authenticated", func(t *testing.T) {
+		_, _, body := ts.get(t, "/user/login")
+
+		csrfToken := extractCSRFToken(t, body)
+
+		form := url.Values{}
+		form.Add("email", "hicham@gmail.com")
+		form.Add("password", "1234")
+		form.Add("csrf_token", csrfToken)
+
+		ts.PostForm(t, "/user/login", form)
+
+		code, _, body := ts.get(t, "/snippet/create")
+
+		assert.Equal(t, code, http.StatusOK)
+		assert.StringContains(t, body, "<form action='/snippet/create' method='POST'>")
+	})
+}
+
 func TestUserSignup(t *testing.T) {
 	// Create the application
 	app := newTestApplication(t)

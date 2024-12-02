@@ -38,6 +38,7 @@ func (app *application) routes() http.Handler {
 	mux.Handle("GET /snippet/create", protected.ThenFunc(app.SnippetCreate))
 	mux.Handle("POST /snippet/create", protected.ThenFunc(app.SnippetCreatePost))
 	mux.Handle("POST /user/logout", protected.ThenFunc(app.userLogoutPost))
+	mux.Handle("GET /user/account", protected.ThenFunc(app.Account))
 
 	standard := alice.New(app.recoverPanic, app.logRequest, commonHeaders)
 
