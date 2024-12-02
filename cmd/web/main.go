@@ -24,12 +24,14 @@ type application struct {
 	users          models.UserModelInterface
 	templateCache  map[string]*template.Template
 	sessionManager *scs.SessionManager
+	debug bool	
 }
 
 func main() {
 
 	addr := flag.String("addr", ":4000", "HTTP network address")
 	dsn := flag.String("dsn", "hicham@/snippetbox?parseTime=true", "MySQL data source name")
+	debug := flag.Bool("debug", false, "Enable debug mode")
 
 	flag.Parse()
 
@@ -63,6 +65,7 @@ func main() {
 		users:          &models.UserModel{DB: db},
 		templateCache:  template,
 		sessionManager: sessionManager,
+		debug: *debug,
 	}
 
 	// init a tls.Config struct to hold then non-default TLS settings we want the server to use.
