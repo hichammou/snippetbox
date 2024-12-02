@@ -71,7 +71,7 @@ func (m *SnippetModel) Latest() ([]Snippet, error) {
 	snippets := make([]Snippet, 0)
 
 	for rows.Next() {
-		// create a pointer to a new zeroed Snippet struct
+		// create a new zeroed Snippet struct
 		var s Snippet
 		err = rows.Scan(&s.ID, &s.Title, &s.Content, &s.Created, &s.Expires)
 		if err != nil {
