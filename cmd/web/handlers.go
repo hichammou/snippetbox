@@ -150,8 +150,17 @@ func (app *application) userLoginPost(w http.ResponseWriter, r *http.Request) {
 	// add the ID of the current user to the session, so that they are now logged in
 	app.sessionManager.Put(r.Context(), "authenticatedUserID", id)
 
+	// Get where the user cam from before they were redirected to login page.
+	path := app.sessionManager.PopString(r.Context(), "fromUri")
+
+	to := "/snippet/create"
+
+	if path != "" {
+		to = path
+	}
+
 	// Redirect the user to the create snippet page.
-	http.Redirect(w, r, "/snippet/create", http.StatusSeeOther)
+	http.Redirect(w, r, to, http.StatusSeeOther)
 }
 
 func (app *application) userLogoutPost(w http.ResponseWriter, r *http.Request) {
