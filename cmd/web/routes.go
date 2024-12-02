@@ -39,6 +39,8 @@ func (app *application) routes() http.Handler {
 	mux.Handle("POST /snippet/create", protected.ThenFunc(app.SnippetCreatePost))
 	mux.Handle("POST /user/logout", protected.ThenFunc(app.userLogoutPost))
 	mux.Handle("GET /user/account", protected.ThenFunc(app.Account))
+	mux.Handle("GET /user/account/change-password", protected.ThenFunc(app.userChangePassword))
+	mux.Handle("POST /user/account/change-password", protected.ThenFunc(app.userChangePasswordPost))
 
 	standard := alice.New(app.recoverPanic, app.logRequest, commonHeaders)
 

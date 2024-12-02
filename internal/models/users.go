@@ -15,6 +15,7 @@ type UserModelInterface interface {
 	Authenticate(email, password string) (int, error)
 	Exists(id int) (bool, error)
 	Get(id int) (User, error)
+	UpdatePassword(id int, oldPassword, newPassword string) error
 }
 
 type User struct {
@@ -107,4 +108,38 @@ func (m *UserModel) Get(id int) (User, error) {
 	}
 
 	return u, nil
+}
+
+func (m *UserModel) UpdatePassword(id int, oldPassword, newPassword string) error {
+	var password string
+
+	stmt := `SELECT hashed_password FROM users WHERE id = ?`
+
+	err := m.DB.QueryRow(stmt, id).Scan(&password)
+
+	if err != nil {
+		return err
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(password), []byte(oldPassword))
+	if err != nil {
+		return ErrInvalideCredentials
+	}
+
+	hashed, err := bcrypt.GenerateFromPassword([]byte(newPassword), 12)
+
+	if err != nil {
+		return err
+	}
+
+	stmt = `UPDATE users SET hashed_password = ? WHERE id = ?`
+
+	_, err = m.DB.Exec(stmt, hashed, id)
+
+	if err != nil {
+		return err
+	}
+
+	// Means no error
+	return nil
 }

@@ -54,6 +54,10 @@ func Match(s string, rx *regexp.Regexp) bool {
 	return rx.MatchString(s)
 }
 
+func Equals[T comparable](v1, v2 T) bool {
+	return v1 == v2
+}
+
 // PermittedValue() returns true if a value is in a list of specific permitted values.
 func PermittedValue[T comparable](value T, PermittedValues ...T) bool {
 	return slices.Contains(PermittedValues, value)
