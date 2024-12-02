@@ -24,6 +24,7 @@ func (app *application) routes() http.Handler {
 
 	mux.Handle("GET /{$}", dynamic.ThenFunc(app.Home))
 	mux.Handle("GET /snippet/view/{id}", dynamic.ThenFunc(app.SnippetView))
+	mux.Handle("GET /about", dynamic.ThenFunc(app.About))
 
 	// Add the five new routes, all of which use our 'dynamic' middleware chain.
 	mux.Handle("GET /user/signup", dynamic.ThenFunc(app.userSignup))
