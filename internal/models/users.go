@@ -111,7 +111,7 @@ func (m *UserModel) Get(id int) (User, error) {
 }
 
 func (m *UserModel) UpdatePassword(id int, oldPassword, newPassword string) error {
-	var password string
+	var password []byte
 
 	stmt := `SELECT hashed_password FROM users WHERE id = ?`
 
@@ -121,9 +121,12 @@ func (m *UserModel) UpdatePassword(id int, oldPassword, newPassword string) erro
 		return err
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(password), []byte(oldPassword))
+	err = bcrypt.CompareHashAndPassword(password, []byte(oldPassword))
 	if err != nil {
-		return ErrInvalideCredentials
+		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+			return ErrInvalideCredentials
+		}
+		return err
 	}
 
 	hashed, err := bcrypt.GenerateFromPassword([]byte(newPassword), 12)
